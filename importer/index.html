@@ -79,18 +79,15 @@
         .dropzone-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--gray-500); }
         .dropzone p { margin-bottom: 1rem; color: var(--gray-500); }
 
-        .tabs {
-            display: flex; gap: 0.5rem; margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--gray-200); padding-bottom: 0.5rem;
+        .step-indicator {
+            display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;
         }
-        .tab {
-            padding: 0.5rem 1rem; border: none; background: transparent; cursor: pointer;
-            border-radius: 6px; font-weight: 500; color: var(--gray-500);
+        .step {
+            display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
+            background: var(--gray-200); border-radius: 20px; font-size: 0.9rem;
         }
-        .tab.active { background: var(--primary); color: white; }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .step.active { background: var(--primary); color: white; }
+        .step.completed { background: var(--success); color: white; }
 
         .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;
@@ -110,7 +107,6 @@
         .badge-success { background: #dcfce7; color: #166534; }
         .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
-        .badge-info { background: #dbeafe; color: #1e40af; }
 
         .progress-bar { height: 12px; background: var(--gray-200); border-radius: 6px; overflow: hidden; margin-top: 1rem; }
         .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
@@ -130,29 +126,10 @@
         .alert-danger { background: #fee2e2; color: #991b1b; }
         .alert-info { background: #dbeafe; color: #1e40af; }
 
-        .welcome-screen {
-            text-align: center; padding: 3rem; background: white; border-radius: var(--radius);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 2rem;
-        }
-        .welcome-screen h2 { color: var(--primary); margin-bottom: 1rem; }
-        .welcome-screen p { color: var(--gray-500); max-width: 600px; margin: 0 auto 2rem; line-height: 1.6; }
-
-        .validation-step { margin-bottom: 1.5rem; }
-        .mapping-table { margin-top: 1rem; }
         .mapping-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
-        .mapping-row label { min-width: 180px; margin: 0; }
+        .mapping-row label { min-width: 180px; margin: 0; font-weight: 500; }
         .mapping-row select { flex: 1; }
         .field-required::after { content:" *"; color: var(--danger); }
-
-        .step-indicator {
-            display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;
-        }
-        .step {
-            display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
-            background: var(--gray-200); border-radius: 20px; font-size: 0.9rem;
-        }
-        .step.active { background: var(--primary); color: white; }
-        .step.completed { background: var(--success); color: white; }
     </style>
 </head>
 <body>
@@ -162,7 +139,6 @@
             <p>Carga masiva de cardholders desde CSV</p>
         </div>
 
-        <!-- Step Indicator -->
         <div class="step-indicator" id="stepIndicator">
             <div class="step active" data-step="config">1. Configuración</div>
             <div class="step" data-step="upload">2. Cargar CSV</div>
@@ -170,7 +146,7 @@
             <div class="step" data-step="import">4. Importar</div>
         </div>
 
-        <!-- Pantalla de Configuración -->
+        <!-- CONFIG -->
         <div id="configScreen" class="card">
             <div class="card-header">⚙️ Configuración de API</div>
             <div class="card-body">
@@ -178,33 +154,22 @@
                     <span>ℹ️</span>
                     <span> Necesitas un token de API de Gallagher Command Centre con permisos de escritura.</span>
                 </div>
-
                 <div class="form-group">
                     <label for="apiHost">Host de Gallagher CC</label>
-                    <input type="text" id="apiHost" placeholder="https://gallagher-server:8443" value="">
+                    <input type="text" id="apiHost" placeholder="https://gallagher-server:8443">
                     <small style="color:var(--gray-500)">Incluye https:// y puerto</small>
                 </div>
-
                 <div class="form-group">
                     <label for="apiKey">API Key / Bearer Token</label>
                     <input type="password" id="apiKey" placeholder="Tu token de API">
                 </div>
-
-                <div class="form-group">
-                    <label for="apiVersion">Versión API</label>
-                    <select id="apiVersion">
-                        <option value="v1">v1</option>
-                        <option value="v2">v2</option>
-                    </select>
-                </div>
-
-                <button class="btn btn-primary" onclick="saveAndContinue()">
-                    Guardar y continuar →
+                <button class="btn btn-primary" onclick="testAndContinue()">
+                    🔗 Probar conexión y continuar →
                 </button>
             </div>
         </div>
 
-        <!-- Pantalla de Upload CSV -->
+        <!-- UPLOAD -->
         <div id="uploadScreen" class="card hidden">
             <div class="card-header">📁 Subir Archivo CSV</div>
             <div class="card-body">
@@ -216,18 +181,16 @@
                         Seleccionar archivo
                     </button>
                 </div>
-
                 <div id="fileInfo" class="alert alert-info hidden">
                     <span id="fileName"></span>
                     <button class="btn btn-danger" style="margin-left:auto;" onclick="clearFile()">✕</button>
                 </div>
-
                 <div id="previewSection" class="hidden">
                     <h3 style="margin:1.5rem 0 1rem;">Vista previa de datos</h3>
                     <div class="alert alert-info" id="validationSummary">
                         Analizando estructura del CSV...
                     </div>
-                    <div id="csvPreview" class="mapping-table"></div>
+                    <div id="csvPreview"></div>
                     <button class="btn btn-success" onclick="goToMapping()">
                         Continuar → Asignar campos
                     </button>
@@ -235,7 +198,7 @@
             </div>
         </div>
 
-        <!-- Pantalla de Validación / Mapeo -->
+        <!-- VALIDATE / MAPPING -->
         <div id="validateScreen" class="card hidden">
             <div class="card-header">
                 ✅ Validar Datos
@@ -249,7 +212,6 @@
                     </p>
                     <div class="mapping-table" id="mappingForm"></div>
                 </div>
-
                 <div class="validation-step">
                     <h3>📊 Resumen</h3>
                     <div class="stats-grid">
@@ -267,14 +229,11 @@
                         </div>
                     </div>
                 </div>
-
-                <button class="btn btn-primary" onclick="goToUpload()">
-                    ← Volver
-                </button>
+                <button class="btn btn-primary" onclick="goToUpload()">← Volver</button>
             </div>
         </div>
 
-        <!-- Pantalla de Progreso -->
+        <!-- IMPORT PROGRESS -->
         <div id="importScreen" class="card hidden">
             <div class="card-header">
                 ⏳ Importación en progreso
@@ -301,7 +260,7 @@
             </div>
         </div>
 
-        <!-- Pantalla de Historial -->
+        <!-- HISTORY -->
         <div id="historyScreen" class="card hidden">
             <div class="card-header">
                 📜 Historial de Importaciones
@@ -321,14 +280,14 @@
                         </tr>
                     </thead>
                     <tbody id="historyTable">
-                        <tr><td colspan="7" style="text-align:center; color:var(--gray-500);">No hay registros aún</td></tr>
+                        <tr><td colspan="7" style="text-align:center;color:var(--gray-500);">No hay registros</td></tr>
                     </tbody>
                 </table>
                 <button class="btn btn-primary" onclick="goToConfig()" style="margin-top:1rem;">← Volver al inicio</button>
             </div>
         </div>
 
-        <!-- Pantalla de Logs -->
+        <!-- LOGS -->
         <div id="logsScreen" class="card hidden">
             <div class="card-header">
                 📋 Consola de Logs
@@ -339,7 +298,7 @@
             </div>
         </div>
 
-        <!-- Modal de error -->
+        <!-- ERROR MODAL -->
         <div id="errorModal" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;">
             <div class="card" style="max-width:500px;width:100%;">
                 <div class="card-header">⚠️ Error</div>
@@ -352,12 +311,10 @@
     </div>
 
     <script>
-        // Estado global
         const state = {
             config: {
                 host: localStorage.getItem('gh_host') || '',
-                apiKey: localStorage.getItem('gh_apiKey') || '',
-                apiVersion: localStorage.getItem('gh_apiVersion') || 'v1'
+                apiKey: localStorage.getItem('gh_api_key') || ''
             },
             csvData: null,
             fileName: '',
@@ -369,7 +326,6 @@
             stats: { total: 0, ready: 0, missing: 0 }
         };
 
-        // Utilidades
         function log(msg) {
             const ts = new Date().toLocaleTimeString();
             state.logs.unshift(`[${ts}] ${msg}`);
@@ -411,23 +367,37 @@
         }
 
         // --- CONFIGURACIÓN ---
-        function saveAndContinue() {
-            state.config.host = document.getElementById('apiHost').value.trim();
-            state.config.apiKey = document.getElementById('apiKey').value.trim();
-            state.config.apiVersion = document.getElementById('apiVersion').value;
+        async function testAndContinue() {
+            const host = document.getElementById('apiHost').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
 
-            if (!state.config.host || !state.config.apiKey) {
-                showError('Completa todos los campos de configuración');
+            if (!host || !apiKey) {
+                showError('Completa todos los campos');
                 return;
             }
 
-            localStorage.setItem('gh_host', state.config.host);
-            localStorage.setItem('gh_apiKey', state.config.apiKey);
-            localStorage.setItem('gh_apiVersion', state.config.apiVersion);
+            log('[Config] Probando conexión...');
+            try {
+                const response = await fetch(`${host}/api/status`, {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
 
-            log('[Config] Guardada');
-            setActiveScreen('uploadScreen');
-            updateStepIndicator('upload');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                state.config.host = host;
+                state.config.apiKey = apiKey;
+                localStorage.setItem('gh_host', host);
+                localStorage.setItem('gh_api_key', apiKey);
+
+                log('[Config] ✅ Conexión exitosa. Configuración guardada');
+                setActiveScreen('uploadScreen');
+                updateStepIndicator('upload');
+            } catch (error) {
+                log(`[Config] ❌ ${error.message}`);
+                showError(`No se pudo conectar: ${error.message}. Verifica el host y token.`);
+            }
         }
 
         // --- UPLOAD CSV ---
@@ -524,12 +494,7 @@
             }
 
             const total = state.csvData.length;
-            const hasHeader = state.headers.length > 0;
-            const sampleRows = state.csvData.slice(0, Math.min(5, total));
-
-            // Detectar columnas probables
             const nameCols = detectNameColumns(state.headers);
-            const requiredCount = nameCols.firstName && nameCols.lastName ? 2 : 0;
             const estimatedReady = Math.min(total, Math.max(1, Math.floor(total * 0.9)));
 
             summary.className = 'alert alert-success';
@@ -574,7 +539,7 @@
             updateStepIndicator('config');
         }
 
-        // --- VALIDACIÓN / MAPPING ---
+        // --- MAPPING ---
         function generateMappingForm() {
             const form = document.getElementById('mappingForm');
             const gallagherFields = [
@@ -591,15 +556,13 @@
             let html = '';
             state.headers.forEach(header => {
                 const fieldId = `map-${header.replace(/\s/g, '-')}`;
-                html += `<div class="mapping-row">`;
-                html += `<label for="${fieldId}"><strong>${header}</strong></label>`;
-                html += `<select id="${fieldId}" onchange="updateMapping('${header}', this.value)">`;
-                html += `<option value="">-- Ignorar --</option>`;
-                gallagherFields.forEach(f => {
-                    const req = f.required ? ' <span class="field-required">*</span>' : '';
-                    html += `<option value="${f.value}">${f.label}${req}</option>`;
-                });
-                html += `</select></div>`;
+                html += `<div class="mapping-row">
+                    <label for="${fieldId}"><strong>${header}</strong></label>
+                    <select id="${fieldId}" onchange="updateMapping('${header}', this.value)">
+                        <option value="">-- Ignorar --</option>
+                        ${gallagherFields.map(f => `<option value="${f.value}">${f.label}${f.required ? ' <span class="field-required">*</span>' : ''}</option>`).join('')}
+                    </select>
+                </div>`;
             });
             form.innerHTML = html;
 
@@ -615,10 +578,7 @@
                 else if (l.includes('phone') || l.includes('tel') || l.includes('mobile')) select.value = 'phone';
             });
 
-            // Validar mapeo mínimo
-            setTimeout(() => {
-                validateMapping();
-            }, 100);
+            setTimeout(validateMapping, 100);
         }
 
         function updateMapping(header, value) {
@@ -666,7 +626,7 @@
             if (cardNumber) {
                 payload.cards = [{ cardNumber, cardType: "Default" }];
             }
-            const accessGroupId = get('accessGroup'); // Ya resuelto a ID
+            const accessGroupId = get('accessGroup');
             if (accessGroupId) {
                 payload.accessGroups = [{ id: accessGroupId }];
             }
@@ -706,13 +666,11 @@
             setActiveScreen('importScreen');
             updateProgress(0);
 
-            // Cache de access group IDs
             const agCache = {};
 
             for (let i = 0; i < total; i++) {
                 const row = state.csvData[i];
                 try {
-                    // Resolver access group si es necesario
                     if (state.mapping.accessGroup && row[state.mapping.accessGroup]) {
                         const name = row[state.mapping.accessGroup];
                         if (!agCache[name]) {
@@ -748,9 +706,9 @@
         function updateProgress(percent) {
             document.getElementById('progressPercent').textContent = percent + '%';
             document.getElementById('progressFill').style.width = percent + '%';
-            document.getElementById('progressTotal').textContent = state.csvData?.length || 0;
-            document.getElementById('progressSuccess').textContent = Math.round((percent/100) * (state.csvData?.length||0));
-            document.getElementById('progressFailed').textContent = 0; // Se actualiza después
+            const total = state.csvData?.length || 0;
+            document.getElementById('progressTotal').textContent = total;
+            document.getElementById('progressSuccess').textContent = Math.round((percent/100)*total);
         }
 
         // --- HISTORIAL ---
@@ -797,7 +755,6 @@
             if (state.config.host && state.config.apiKey) {
                 document.getElementById('apiHost').value = state.config.host;
                 document.getElementById('apiKey').value = state.config.apiKey;
-                document.getElementById('apiVersion').value = state.config.apiVersion;
                 setActiveScreen('uploadScreen');
                 updateStepIndicator('upload');
             } else {
